@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block content %}
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<style>
+    body {
+        background-color: #f5f5f5;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .back-button {
+        position: absolute;
+        top: 20px; /* Расположение кнопки от верхнего края */
+        right: 20px; /* Расположение кнопки от правого края */
+        background-color: transparent; /* Фон кнопки */
+        border: none; /* Убираем рамку */
+        cursor: pointer; /* Курсор при наведении */
+        color: #333; /* Цвет текста и иконки */
+    }
+
+    .back-button i {
+        font-size: 24px; /* Размер иконки */
+    }
+
+    .transfer-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 50px;
+        background-color: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+        position: relative; /* Для корректного позиционирования кнопки */
+    }
+
+    h1 {
+        color: #333;
+        font-size: 32px;
+        margin: 40px 0; /* Убираем верхний отступ */
+        text-align: center;
+    }
+
+    label {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+        width: 100%;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 18px;
+        transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .currency-select {
+        position: relative;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+    }
+
+    .currency-icon {
+        width: 40px; /* Размер иконки */
+        height: 40px;
+        margin-right: 15px;
+    }
+
+    .select-selected {
+        padding: 20px;
+        border: 1px solid #007bff;
+        border-radius: 10px;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 18px;
+        flex-grow: 1;
+    }
+
+    .select-items {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        margin-top: 5px;
+        display: none;
+        z-index: 99;
+    }
+
+    .select-items div {
+        padding: 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+    }
+
+    .select-items div:hover {
+        background-color: #f1f1f1;
+    }
+
+    .select-items img {
+        width: 25px;
+        height: 25px;
+        margin-right: 10px;
+    }
+
+    button {
+        width: 100%;
+        padding: 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    .amount-info {
+        font-size: 16px;
+        color: #888;
+        margin-top: -20px;
+        margin-bottom: 30px;
+        text-align: right;
+    }
+
+    /* Модальное окно */
+    .modal {
+        display: none; /* Скрываем по умолчанию */
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .success-icon {
+        color: green;
+        font-size: 50px; /* Размер иконки */
+    }
+</style>
+
+<div class="transfer-container">
+    <!-- Кнопка "Назад" -->
+    <a href="{{ url_for('home') }}" class="back-button">
+        <i class="fas fa-arrow-left"></i> <!-- Иконка "Назад" -->
+    </a>
+    
+    <h1>Send Tokens</h1>
+    
+    <form id="transfer-form" method="POST" action="{{ url_for('transfer') }}">
+        <label for="recipient_wallet">Send to</label>
+        <input type="text" name="recipient_wallet" placeholder="Enter recipient's wallet address" required>
+
+        <label for="currency">Asset</label>
+        <div class="currency-select">
+            <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg" alt="Selected Currency" class="currency-icon" id="selected-icon"> <!-- Иконка выбранной монеты -->
+            <div class="select-selected">ETH Ethereum</div>
+            <div class="select-items">
+                <div data-value="Ethereum" data-icon="https://cryptologos.cc/logos/ethereum-eth-logo.svg">
+                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg" alt="Ethereum"> Ethereum
+                </div>
+                <div data-value="Bitcoin" data-icon="https://cryptologos.cc/logos/bitcoin-btc-logo.svg">
+                    <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.svg" alt="Bitcoin"> Bitcoin
+                </div>
+                <div data-value="USDT" data-icon="https://cryptologos.cc/logos/tether-usdt-logo.svg">
+                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg" alt="USDT"> USDT
+                </div>
+                <div data-value="TON" data-icon="https://cryptologos.cc/logos/toncoin-ton-logo.svg">
+                    <img src="https://cryptologos.cc/logos/toncoin-ton-logo.svg" alt="TON"> TON
+                </div>
+                <div data-value="ZhenyaCoin" data-icon="{{ url_for('static', filename='zhenyacoin.png') }}">
+                    <img src="{{ url_for('static', filename='zhenyacoin.png') }}" alt="ZhenyaCoin"> ZhenyaCoin
+                </div>
+                <div data-value="Makscoin" data-icon="{{ url_for('static', filename='Maks_coin.png') }}">
+                    <img src="{{ url_for('static', filename='Maks_coin.png') }}" alt="Makscoin"> Makscoin
+                </div>
+            </div>
+            <input type="hidden" name="currency" id="selected-currency" value="Ethereum">
+        </div>
+
+        <label for="amount">Amount</label>
+        <input type="number" name="amount" placeholder="Enter amount" min="0.01" max="1000" step="0.01" required>
+        <div class="amount-info">≈ ${{ amount_in_usd }}</div>
+
+        <button type="submit">Send</button>
+    </form>
+    
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <ul>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% endwith %}
+</div>
+
+<!-- Модальное окно -->
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i> <!-- Иконка галочки -->
+        </div>
+        <h2>Transaction Successful!</h2>
+        <p>Your transaction has been completed successfully.</p>
+    </div>
+</div>
+
+<script>
+    // Выбор монеты
+    document.querySelector('.select-selected').addEventListener('click', function() {
+        const items = document.querySelector('.select-items');
+        items.style.display = items.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.querySelectorAll('.select-items div').forEach(item => {
+        item.addEventListener('click', function() {
+            const currencyName = this.getAttribute('data-value');
+            const currencyIcon = this.getAttribute('data-icon');
+            document.getElementById('selected-currency').value = currencyName;
+            document.querySelector('.select-selected').innerText = currencyName;
+            document.getElementById('selected-icon').src = currencyIcon; // Меняем иконку
+            document.querySelector('.select-items').style.display = 'none'; // Скрываем выпадающий список
+        });
+    });
+
+    // Обработка отправки формы
+    document.getElementById('transfer-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Предотвращаем отправку формы
+
+        // Здесь вы можете сделать вызов к вашему API или выполнить нужные действия по отправке монет.
+        // Например, отправьте запрос на сервер и обработайте ответ.
+
+        // После успешной отправки показываем модальное окно
+        document.getElementById('successModal').style.display = 'block';
+
+        // Для отправки формы после отображения модального окна
+        setTimeout(() => {
+            document.getElementById('transfer-form').submit();
+        }, 2000); // Отправка формы через 2 секунды после показа модального окна
+    });
+
+    // Закрытие модального окна
+    document.getElementById('closeModal').onclick = function() {
+        document.getElementById('successModal').style.display = 'none';
+    }
+
+    // Закрытие модального окна при клике вне его
+    window.onclick = function(event) {
+        const modal = document.getElementById('successModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+
+{% endblock %}
